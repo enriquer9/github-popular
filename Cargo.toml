@@ -1,0 +1,21 @@
+[package]
+name = "github-popular"
+version = "0.1.0"
+edition = "2021"
+authors = ["Rust Systems Engineer"]
+description = "CLI tool to find and sort the most popular public repositories for GitHub accounts"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+toml = { version = "0.8" }
+colored = { version = "2.1" }
+thiserror = { version = "1.0" }
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
+tempfile = "3.12"
