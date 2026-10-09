@@ -6,16 +6,16 @@ authors = ["Rust Systems Engineer"]
 description = "CLI tool to find and sort the most popular public repositories for GitHub accounts"
 
 [dependencies]
-clap = { version = "4.5", features = ["derive"] }
-colored = { version = "2.1" }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+clap = { version = "4.6", features = ["derive"] }
+colored = { version = "3.1" }
+reqwest = { version = "0.13", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
-thiserror = { version = "1.0" }
-tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }
-toml = { version = "0.8" }
+thiserror = { version = "2.0" }
+tokio = { version = "1.53", features = ["macros", "rt-multi-thread"] }
+toml = { version = "1.1" }
 
 [dev-dependencies]
-assert_cmd = "2.0"
+assert_cmd = "2.2"
 predicates = "3.1"
-tempfile = "3.12"
+tempfile = "3.27"
