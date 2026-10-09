@@ -1,10 +1,9 @@
+use crate::errors::{AppError, Result};
+use crate::models::{OutputPayload, Repository};
 use colored::Colorize;
 use std::fs::File;
 use std::io::{self, IsTerminal, Write};
 use std::path::Path;
-
-use crate::errors::{AppError, Result};
-use crate::models::{OutputPayload, Repository};
 
 /// Controls colorization and formatting for terminal output.
 pub struct TerminalFormatter {
@@ -28,17 +27,28 @@ impl TerminalFormatter {
         if repos.is_empty() {
             println!(
                 "{}",
-                format!("No public, non-forked repositories found for account '{}'.", account)
-                    .yellow()
+                format!(
+                    "No public, non-forked repositories found for account '{}'.",
+                    account
+                )
+                .yellow()
             );
             return;
         }
 
         // Header for the account
         let header_title = format!("Account: {}", account);
-        let count_str = format!("({} public non-forked repo{})", repos.len(), if repos.len() == 1 { "" } else { "s" });
+        let count_str = format!(
+            "({} public non-forked repo{})",
+            repos.len(),
+            if repos.len() == 1 { "" } else { "s" }
+        );
         println!();
-        println!("{} {}", header_title.bold().bright_magenta(), count_str.dimmed());
+        println!(
+            "{} {}",
+            header_title.bold().bright_magenta(),
+            count_str.dimmed()
+        );
         println!("{}", "=".repeat(60).dimmed());
 
         for (idx, repo) in repos.iter().enumerate() {
@@ -119,10 +129,11 @@ pub fn write_json_output(path: &Path, payload: &OutputPayload) -> Result<()> {
         source: e,
     })?;
 
-    file.write_all(json_str.as_bytes()).map_err(|e| AppError::Io {
-        path: path.to_path_buf(),
-        source: e,
-    })?;
+    file.write_all(json_str.as_bytes())
+        .map_err(|e| AppError::Io {
+            path: path.to_path_buf(),
+            source: e,
+        })?;
 
     Ok(())
 }
@@ -144,10 +155,11 @@ pub fn write_toml_output(path: &Path, payload: &OutputPayload) -> Result<()> {
         source: e,
     })?;
 
-    file.write_all(toml_str.as_bytes()).map_err(|e| AppError::Io {
-        path: path.to_path_buf(),
-        source: e,
-    })?;
+    file.write_all(toml_str.as_bytes())
+        .map_err(|e| AppError::Io {
+            path: path.to_path_buf(),
+            source: e,
+        })?;
 
     Ok(())
 }

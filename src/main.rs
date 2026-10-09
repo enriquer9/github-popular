@@ -1,11 +1,10 @@
 use clap::Parser;
 use colored::Colorize;
-use std::process::ExitCode;
-
 use github_popular::{
     write_json_output, write_toml_output, Cli, GitHubClient, OutputPayload, Repository,
     TerminalFormatter,
 };
+use std::process::ExitCode;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -19,7 +18,11 @@ async fn main() -> ExitCode {
     let client = match GitHubClient::new() {
         Ok(c) => c,
         Err(err) => {
-            eprintln!("{}: Failed to initialize GitHub client: {}", "Error".bright_red().bold(), err);
+            eprintln!(
+                "{}: Failed to initialize GitHub client: {}",
+                "Error".bright_red().bold(),
+                err
+            );
             return ExitCode::FAILURE;
         }
     };

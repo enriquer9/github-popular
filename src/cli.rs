@@ -1,6 +1,6 @@
+use crate::errors::{AppError, Result};
 use clap::Parser;
 use std::path::{Path, PathBuf};
-use crate::errors::{AppError, Result};
 
 #[derive(Parser, Debug, Clone)]
 #[command(

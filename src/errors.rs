@@ -11,10 +11,7 @@ pub enum AppError {
     AuthenticationFailed { status: u16, message: String },
 
     #[error("GitHub API rate limit exceeded ({limit} requests/hr). Limit resets at {reset_time}. Consider providing a GITHUB_TOKEN environment variable.")]
-    RateLimitExceeded {
-        limit: String,
-        reset_time: String,
-    },
+    RateLimitExceeded { limit: String, reset_time: String },
 
     #[error("GitHub API error (HTTP {status}): {message}")]
     GitHubApi { status: u16, message: String },

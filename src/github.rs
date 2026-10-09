@@ -1,9 +1,8 @@
+use crate::errors::{AppError, Result};
+use crate::models::{RawGitHubAccount, RawGitHubRepo, Repository};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 use reqwest::{Client, Response, StatusCode};
 use std::time::{Duration, UNIX_EPOCH};
-
-use crate::errors::{AppError, Result};
-use crate::models::{RawGitHubAccount, RawGitHubRepo, Repository};
 
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 
@@ -70,7 +69,9 @@ impl GitHubClient {
         let account_info = self.get_account_info(trimmed_account).await?;
 
         // 2. Fetch all public repositories owned by the account across all pages
-        let raw_repos = self.fetch_all_repos(trimmed_account, &account_info.account_type).await?;
+        let raw_repos = self
+            .fetch_all_repos(trimmed_account, &account_info.account_type)
+            .await?;
 
         // 3. Exclude forked repositories
         let mut repos: Vec<Repository> = raw_repos
@@ -104,7 +105,11 @@ impl GitHubClient {
     }
 
     /// Fetches all repositories owned by the account, handling pagination.
-    async fn fetch_all_repos(&self, account: &str, account_type: &str) -> Result<Vec<RawGitHubRepo>> {
+    async fn fetch_all_repos(
+        &self,
+        account: &str,
+        account_type: &str,
+    ) -> Result<Vec<RawGitHubRepo>> {
         let mut all_repos = Vec::new();
         let mut page = 1;
 

@@ -1,14 +1,14 @@
-pub mod cli;
-pub mod errors;
-pub mod github;
-pub mod models;
-pub mod output;
-
 pub use cli::Cli;
 pub use errors::{AppError, Result};
 pub use github::GitHubClient;
 pub use models::{OutputPayload, Repository};
 pub use output::{write_json_output, write_toml_output, TerminalFormatter};
+
+pub mod cli;
+pub mod errors;
+pub mod github;
+pub mod models;
+pub mod output;
 
 #[cfg(test)]
 mod tests {
@@ -126,7 +126,8 @@ mod tests {
         }];
         let payload = OutputPayload::new(repos);
 
-        let json_output = serde_json::to_string_pretty(&payload).expect("JSON serialization failed");
+        let json_output =
+            serde_json::to_string_pretty(&payload).expect("JSON serialization failed");
         let toml_output = toml::to_string_pretty(&payload).expect("TOML serialization failed");
 
         let deserialized_from_json: OutputPayload =
