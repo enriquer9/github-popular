@@ -67,3 +67,33 @@ fn create_parents(path: &Path) -> crate::Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_json_and_toml_representation_equivalence() {
+        let repos = vec![Repository {
+            owner: "tokio-rs".to_string(),
+            name: "tokio".to_string(),
+            url: "https://github.com/tokio-rs/tokio".to_string(),
+            description: "An event-driven, non-blocking I/O platform".to_string(),
+            stars: 26000,
+        }];
+        let payload = ExportPayload::new(repos);
+
+        let json_export =
+            serde_json::to_string_pretty(&payload).expect("JSON serialization failed");
+        let toml_export = toml::to_string_pretty(&payload).expect("TOML serialization failed");
+
+        let deserialized_from_json: ExportPayload =
+            serde_json::from_str(&json_export).expect("JSON deserialization failed");
+        let deserialized_from_toml: ExportPayload =
+            toml::from_str(&toml_export).expect("TOML deserialization failed");
+
+        assert_eq!(deserialized_from_json, payload);
+        assert_eq!(deserialized_from_toml, payload);
+        assert_eq!(deserialized_from_json, deserialized_from_toml);
+    }
+}

@@ -71,3 +71,44 @@ fn paths_are_equivalent(p1: &Path, p2: &Path) -> bool {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_no_accounts_validation() {
+        let cli = Cli {
+            accounts: vec![],
+            json: None,
+            toml: None,
+        };
+        assert!(matches!(cli.validate(), Err(AppError::NoAccountsProvided)));
+    }
+
+    #[test]
+    fn test_duplicate_path_validation() {
+        let cli = Cli {
+            accounts: vec!["rust-lang".to_string()],
+            json: Some(PathBuf::from("/tmp/results.data")),
+            toml: Some(PathBuf::from("/tmp/results.data")),
+        };
+
+        let result = cli.validate();
+        assert!(result.is_err(), "Duplicate paths should return an error");
+        match result.unwrap_err() {
+            AppError::DuplicateExportPath(p) => {
+                assert_eq!(p, PathBuf::from("/tmp/results.data"));
+            }
+            other => panic!("Unexpected error type: {:?}", other),
+        }
+
+        // Distinct paths should succeed
+        let cli_ok = Cli {
+            accounts: vec!["rust-lang".to_string()],
+            json: Some(PathBuf::from("/tmp/results.json")),
+            toml: Some(PathBuf::from("/tmp/results.toml")),
+        };
+        assert!(cli_ok.validate().is_ok());
+    }
+}
