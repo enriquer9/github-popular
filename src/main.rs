@@ -35,12 +35,9 @@ async fn main() -> ExitCode {
         }
     };
 
-    let formatter = TerminalFormatter::new();
-    let mut all_repositories: Vec<Repository> = Vec::new();
-    let mut has_errors = false;
     let has_file_output = cli.has_file_output();
 
-    let mut stream = match stream_repos(client, cli.accounts) {
+    let stream = match stream_repos(client, cli.accounts) {
         Ok(s) => s,
         Err(err) => {
             eprintln!(
@@ -51,6 +48,45 @@ async fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+
+    let (has_stream_errors, all_repositories) = handle_stream(has_file_output, stream).await;
+    let has_output_errors = output(has_file_output, cli.json, cli.toml, all_repositories);
+
+    if has_stream_errors || has_output_errors {
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
+}
+
+fn stream_repos(
+    client: GitHubClient,
+    accounts: Vec<String>,
+) -> Result<impl Stream<Item = Result<GitHubResult, AppError>>, AppError> {
+    let client = Arc::new(client);
+    let (tx, rx) = mpsc::channel::<github_popular::Result<GitHubResult>>(1);
+
+    for account in accounts {
+        let client = Arc::clone(&client);
+        let tx = tx.clone();
+
+        tokio::spawn(async move {
+            let result = client.fetch_popular_repos(&account).await;
+            let _ = tx.send(result).await;
+        });
+    }
+
+    drop(tx);
+    Ok(ReceiverStream::new(rx))
+}
+
+async fn handle_stream(
+    has_file_output: bool,
+    mut stream: impl Stream<Item = Result<GitHubResult, AppError>> + Unpin,
+) -> (bool, Vec<Repository>) {
+    let formatter = TerminalFormatter::new();
+    let mut all_repositories: Vec<Repository> = Vec::new();
+    let mut has_errors = false;
 
     while let Some(result) = stream.next().await {
         match result {
@@ -82,32 +118,7 @@ async fn main() -> ExitCode {
         }
     }
 
-    if has_errors || output(has_file_output, cli.json, cli.toml, all_repositories) {
-        ExitCode::FAILURE
-    } else {
-        ExitCode::SUCCESS
-    }
-}
-
-fn stream_repos(
-    client: GitHubClient,
-    accounts: Vec<String>,
-) -> Result<impl Stream<Item = Result<GitHubResult, AppError>>, AppError> {
-    let client = Arc::new(client);
-    let (tx, rx) = mpsc::channel::<github_popular::Result<GitHubResult>>(1);
-
-    for account in accounts {
-        let client = Arc::clone(&client);
-        let tx = tx.clone();
-
-        tokio::spawn(async move {
-            let result = client.fetch_popular_repos(&account).await;
-            let _ = tx.send(result).await;
-        });
-    }
-
-    drop(tx);
-    Ok(ReceiverStream::new(rx))
+    (has_errors, all_repositories)
 }
 
 fn output(
