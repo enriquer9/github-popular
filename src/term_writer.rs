@@ -1,4 +1,4 @@
-use crate::models::Repository;
+use crate::github_models::Repository;
 use colored::Colorize;
 use std::io::{self, IsTerminal};
 

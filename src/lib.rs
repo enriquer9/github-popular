@@ -1,22 +1,22 @@
 pub use cli::Cli;
 pub use errors::{AppError, Result};
 pub use file_exporter::{export_json, export_toml, ExportPayload};
-pub use github::GitHubClient;
-pub use models::Repository;
+pub use github_client::GitHubClient;
+pub use github_models::Repository;
 pub use term_writer::TerminalWriter;
 
 pub mod cli;
 pub mod errors;
 pub mod file_exporter;
-pub mod github;
-pub mod models;
+pub mod github_client;
+pub mod github_models;
 pub mod term_writer;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::stars_descending_then_name;
-    use models::{RawGitHubOwner, RawGitHubRepo};
+    use crate::github_models::stars_descending_then_name;
+    use github_models::{RawGitHubOwner, RawGitHubRepo};
     use std::path::PathBuf;
 
     #[test]

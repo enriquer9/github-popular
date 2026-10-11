@@ -1,9 +1,9 @@
 use clap::Parser;
 use colored::Colorize;
 use github_popular::file_exporter::{export_json, export_toml, ExportPayload};
-use github_popular::github::GitHubResult;
-use github_popular::github::GitHubResult::{Failure, Success};
-use github_popular::models::stars_descending_then_name;
+use github_popular::github_client::GitHubResult;
+use github_popular::github_client::GitHubResult::{Failure, Success};
+use github_popular::github_models::stars_descending_then_name;
 use github_popular::{AppError, Cli, GitHubClient, Repository, TerminalWriter};
 use std::path::PathBuf;
 use std::process::ExitCode;

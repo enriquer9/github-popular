@@ -1,5 +1,7 @@
 use crate::errors::{AppError, Result};
-use crate::models::{stars_descending_then_name, RawGitHubAccount, RawGitHubRepo, Repository};
+use crate::github_models::{
+    stars_descending_then_name, RawGitHubAccount, RawGitHubRepo, Repository,
+};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 use reqwest::{Client, Response, StatusCode};
 use std::time::{Duration, UNIX_EPOCH};
