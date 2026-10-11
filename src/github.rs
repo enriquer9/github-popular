@@ -6,6 +6,18 @@ use std::time::{Duration, UNIX_EPOCH};
 
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 
+#[derive(Debug, Clone)]
+pub enum GitHubResult {
+    Success {
+        account: String,
+        repos: Vec<Repository>,
+    },
+    Failure {
+        account: String,
+        error: String,
+    },
+}
+
 /// GitHub REST API v3 Client
 #[derive(Clone, Debug)]
 pub struct GitHubClient {
@@ -59,7 +71,7 @@ impl GitHubClient {
 
     /// Fetches all public, non-forked repositories owned by the specified account,
     /// sorted by star count in descending order.
-    pub async fn fetch_popular_repos(&self, account: &str) -> Result<Vec<Repository>> {
+    pub async fn fetch_popular_repos(&self, account: &str) -> Result<GitHubResult> {
         let trimmed_account = account.trim();
         if trimmed_account.is_empty() {
             return Err(AppError::AccountNotFound(account.to_string()));
@@ -87,7 +99,10 @@ impl GitHubClient {
                 .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
         });
 
-        Ok(repos)
+        Ok(GitHubResult::Success {
+            account: account.to_string(),
+            repos,
+        })
     }
 
     /// Queries the account endpoint `/users/{account}` to verify existence and retrieve account type.
