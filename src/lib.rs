@@ -13,6 +13,7 @@ pub mod output;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::stars_descending_then_name;
     use models::{RawGitHubOwner, RawGitHubRepo};
     use std::path::PathBuf;
 
@@ -98,11 +99,7 @@ mod tests {
             },
         ];
 
-        repos.sort_by(|a, b| {
-            b.stars
-                .cmp(&a.stars)
-                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
-        });
+        repos.sort_by(stars_descending_then_name());
 
         assert_eq!(repos[0].name, "rust");
         assert_eq!(repos[0].stars, 100000);

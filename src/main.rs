@@ -2,6 +2,7 @@ use clap::Parser;
 use colored::Colorize;
 use github_popular::github::GitHubResult;
 use github_popular::github::GitHubResult::{Failure, Success};
+use github_popular::models::stars_descending_then_name;
 use github_popular::{
     write_json_output, write_toml_output, AppError, Cli, GitHubClient, OutputPayload, Repository,
     TerminalFormatter,
@@ -118,12 +119,7 @@ fn output(
     let mut has_errors = false;
     // If file outputs are specified, serialize the combined or per-account list
     if has_file_output {
-        // Sort all accumulated repositories by star count descending across all queried accounts
-        all_repositories.sort_by(|a, b| {
-            b.stars
-                .cmp(&a.stars)
-                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
-        });
+        all_repositories.sort_by(stars_descending_then_name());
 
         let payload = OutputPayload::new(all_repositories);
 

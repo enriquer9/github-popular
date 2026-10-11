@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 /// Upstream GitHub repository structure returned by REST API v3.
 #[derive(Debug, Clone, Deserialize)]
@@ -49,6 +50,16 @@ impl Repository {
             description,
             stars: raw.stargazers_count,
         }
+    }
+}
+
+/// Sort repositories by star count descending then by name to break ties
+pub fn stars_descending_then_name() -> fn(&Repository, &Repository) -> Ordering {
+    |left, right| {
+        right
+            .stars
+            .cmp(&left.stars)
+            .then_with(|| left.name.to_lowercase().cmp(&right.name.to_lowercase()))
     }
 }
 

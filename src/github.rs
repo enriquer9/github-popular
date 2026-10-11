@@ -1,5 +1,5 @@
 use crate::errors::{AppError, Result};
-use crate::models::{RawGitHubAccount, RawGitHubRepo, Repository};
+use crate::models::{stars_descending_then_name, RawGitHubAccount, RawGitHubRepo, Repository};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 use reqwest::{Client, Response, StatusCode};
 use std::time::{Duration, UNIX_EPOCH};
@@ -92,12 +92,8 @@ impl GitHubClient {
             .map(Repository::from_raw)
             .collect();
 
-        // 4. Sort by star count in descending order (with secondary name sort for deterministic output)
-        repos.sort_by(|a, b| {
-            b.stars
-                .cmp(&a.stars)
-                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
-        });
+        // 4. Sort by star count in descending order (with secondary name sort)
+        repos.sort_by(stars_descending_then_name());
 
         Ok(GitHubResult::Success {
             account: account.to_string(),
