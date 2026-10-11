@@ -1,9 +1,6 @@
-use crate::errors::{AppError, Result};
-use crate::models::{OutputPayload, Repository};
+use crate::models::Repository;
 use colored::Colorize;
-use std::fs::File;
-use std::io::{self, IsTerminal, Write};
-use std::path::Path;
+use std::io::{self, IsTerminal};
 
 /// Controls colorization and formatting for terminal output.
 pub struct TerminalFormatter {
@@ -110,56 +107,4 @@ impl Default for TerminalFormatter {
     fn default() -> Self {
         Self::new()
     }
-}
-
-/// Writes repository results to JSON format at the specified path.
-pub fn write_json_output(path: &Path, payload: &OutputPayload) -> Result<()> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).map_err(|e| AppError::Io {
-                path: parent.to_path_buf(),
-                source: e,
-            })?;
-        }
-    }
-
-    let json_str = serde_json::to_string_pretty(payload)?;
-    let mut file = File::create(path).map_err(|e| AppError::Io {
-        path: path.to_path_buf(),
-        source: e,
-    })?;
-
-    file.write_all(json_str.as_bytes())
-        .map_err(|e| AppError::Io {
-            path: path.to_path_buf(),
-            source: e,
-        })?;
-
-    Ok(())
-}
-
-/// Writes repository results to TOML format at the specified path.
-pub fn write_toml_output(path: &Path, payload: &OutputPayload) -> Result<()> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).map_err(|e| AppError::Io {
-                path: parent.to_path_buf(),
-                source: e,
-            })?;
-        }
-    }
-
-    let toml_str = toml::to_string_pretty(payload)?;
-    let mut file = File::create(path).map_err(|e| AppError::Io {
-        path: path.to_path_buf(),
-        source: e,
-    })?;
-
-    file.write_all(toml_str.as_bytes())
-        .map_err(|e| AppError::Io {
-            path: path.to_path_buf(),
-            source: e,
-        })?;
-
-    Ok(())
 }

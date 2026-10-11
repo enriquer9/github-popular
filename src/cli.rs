@@ -34,7 +34,7 @@ impl Cli {
 
         if let (Some(json_path), Some(toml_path)) = (&self.json, &self.toml) {
             if paths_are_equivalent(json_path, toml_path) {
-                return Err(AppError::DuplicateOutputPath(json_path.clone()));
+                return Err(AppError::DuplicateExportPath(json_path.clone()));
             }
         }
 
@@ -42,7 +42,7 @@ impl Cli {
     }
 
     /// Returns true if either `--json` or `--toml` is specified.
-    pub fn has_file_output(&self) -> bool {
+    pub fn has_file_export(&self) -> bool {
         self.json.is_some() || self.toml.is_some()
     }
 }

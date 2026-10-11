@@ -22,7 +22,7 @@ pub enum AppError {
     #[error("Malformed JSON response from GitHub API: {0}")]
     MalformedResponse(#[from] serde_json::Error),
 
-    #[error("Failed to serialize TOML output: {0}")]
+    #[error("Failed to serialize TOML export: {0}")]
     TomlSerialize(#[from] toml::ser::Error),
 
     #[error("File I/O error at '{path}': {source}")]
@@ -32,8 +32,8 @@ pub enum AppError {
         source: std::io::Error,
     },
 
-    #[error("Conflicting output paths: --json and --toml cannot write to the same destination path: {0}")]
-    DuplicateOutputPath(PathBuf),
+    #[error("Conflicting export paths: --json and --toml cannot write to the same destination path: {0}")]
+    DuplicateExportPath(PathBuf),
 
     #[error("No accounts were provided. Specify at least one GitHub account login.")]
     NoAccountsProvided,

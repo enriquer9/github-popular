@@ -35,5 +35,5 @@ fn test_cli_duplicate_json_and_toml_paths() {
 
     cmd.assert()
         .failure()
-        .stderr(predicate::str::contains("Conflicting output paths"));
+        .stderr(predicate::str::contains("Conflicting export paths"));
 }

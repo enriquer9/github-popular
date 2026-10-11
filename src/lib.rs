@@ -1,11 +1,13 @@
 pub use cli::Cli;
 pub use errors::{AppError, Result};
+pub use file_exporter::{export_json, export_toml, ExportPayload};
 pub use github::GitHubClient;
-pub use models::{OutputPayload, Repository};
-pub use output::{write_json_output, write_toml_output, TerminalFormatter};
+pub use models::Repository;
+pub use output::TerminalFormatter;
 
 pub mod cli;
 pub mod errors;
+pub mod file_exporter;
 pub mod github;
 pub mod models;
 pub mod output;
@@ -121,16 +123,16 @@ mod tests {
             description: "An event-driven, non-blocking I/O platform".to_string(),
             stars: 26000,
         }];
-        let payload = OutputPayload::new(repos);
+        let payload = ExportPayload::new(repos);
 
-        let json_output =
+        let json_export =
             serde_json::to_string_pretty(&payload).expect("JSON serialization failed");
-        let toml_output = toml::to_string_pretty(&payload).expect("TOML serialization failed");
+        let toml_export = toml::to_string_pretty(&payload).expect("TOML serialization failed");
 
-        let deserialized_from_json: OutputPayload =
-            serde_json::from_str(&json_output).expect("JSON deserialization failed");
-        let deserialized_from_toml: OutputPayload =
-            toml::from_str(&toml_output).expect("TOML deserialization failed");
+        let deserialized_from_json: ExportPayload =
+            serde_json::from_str(&json_export).expect("JSON deserialization failed");
+        let deserialized_from_toml: ExportPayload =
+            toml::from_str(&toml_export).expect("TOML deserialization failed");
 
         assert_eq!(deserialized_from_json, payload);
         assert_eq!(deserialized_from_toml, payload);
@@ -148,7 +150,7 @@ mod tests {
         let result = cli.validate();
         assert!(result.is_err(), "Duplicate paths should return an error");
         match result.unwrap_err() {
-            AppError::DuplicateOutputPath(p) => {
+            AppError::DuplicateExportPath(p) => {
                 assert_eq!(p, PathBuf::from("/tmp/results.data"));
             }
             other => panic!("Unexpected error type: {:?}", other),

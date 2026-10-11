@@ -1,12 +1,10 @@
 use clap::Parser;
 use colored::Colorize;
+use github_popular::file_exporter::{export_json, export_toml, ExportPayload};
 use github_popular::github::GitHubResult;
 use github_popular::github::GitHubResult::{Failure, Success};
 use github_popular::models::stars_descending_then_name;
-use github_popular::{
-    write_json_output, write_toml_output, AppError, Cli, GitHubClient, OutputPayload, Repository,
-    TerminalFormatter,
-};
+use github_popular::{AppError, Cli, GitHubClient, Repository, TerminalFormatter};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -35,7 +33,7 @@ async fn main() -> ExitCode {
         }
     };
 
-    let has_file_output = cli.has_file_output();
+    let has_file_export = cli.has_file_export();
 
     let stream = match stream_repos(client, cli.accounts) {
         Ok(s) => s,
@@ -49,10 +47,10 @@ async fn main() -> ExitCode {
         }
     };
 
-    let (has_stream_errors, all_repositories) = handle_stream(has_file_output, stream).await;
-    let has_output_errors = output(has_file_output, cli.json, cli.toml, all_repositories);
+    let (has_stream_errors, all_repositories) = handle_stream(has_file_export, stream).await;
+    let has_export_errors = export(has_file_export, cli.json, cli.toml, all_repositories);
 
-    if has_stream_errors || has_output_errors {
+    if has_stream_errors || has_export_errors {
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS
@@ -81,7 +79,7 @@ fn stream_repos(
 }
 
 async fn handle_stream(
-    has_file_output: bool,
+    has_file_export: bool,
     mut stream: impl Stream<Item = Result<GitHubResult, AppError>> + Unpin,
 ) -> (bool, Vec<Repository>) {
     let formatter = TerminalFormatter::new();
@@ -92,7 +90,7 @@ async fn handle_stream(
         match result {
             Ok(ghr) => match ghr {
                 Success { account, repos } => {
-                    if !has_file_output {
+                    if !has_file_export {
                         formatter.render_account_repos(&account, &repos);
                     }
                     all_repositories.extend(repos);
@@ -121,23 +119,23 @@ async fn handle_stream(
     (has_errors, all_repositories)
 }
 
-fn output(
-    has_file_output: bool,
+fn export(
+    has_file_export: bool,
     json: Option<PathBuf>,
     toml: Option<PathBuf>,
     mut all_repositories: Vec<Repository>,
 ) -> bool {
     let mut has_errors = false;
-    // If file outputs are specified, serialize the combined or per-account list
-    if has_file_output {
+    // If file exports are specified, serialize the combined or per-account list
+    if has_file_export {
         all_repositories.sort_by(stars_descending_then_name());
 
-        let payload = OutputPayload::new(all_repositories);
+        let payload = ExportPayload::new(all_repositories);
 
         if let Some(json_path) = &json {
-            if let Err(err) = write_json_output(json_path, &payload) {
+            if let Err(err) = export_json(json_path, &payload) {
                 eprintln!(
-                    "{}: Failed to write JSON output to '{}': {}",
+                    "{}: Failed to write JSON export to '{}': {}",
                     "Error".bright_red().bold(),
                     json_path.display(),
                     err
@@ -147,9 +145,9 @@ fn output(
         }
 
         if let Some(toml_path) = &toml {
-            if let Err(err) = write_toml_output(toml_path, &payload) {
+            if let Err(err) = export_toml(toml_path, &payload) {
                 eprintln!(
-                    "{}: Failed to write TOML output to '{}': {}",
+                    "{}: Failed to write TOML export to '{}': {}",
                     "Error".bright_red().bold(),
                     toml_path.display(),
                     err

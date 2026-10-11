@@ -62,16 +62,3 @@ pub fn stars_descending_then_name() -> fn(&Repository, &Repository) -> Ordering 
             .then_with(|| left.name.to_lowercase().cmp(&right.name.to_lowercase()))
     }
 }
-
-/// Container struct for serialized outputs (JSON and TOML).
-/// Ensures identical fields and consistent formatting in both formats.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct OutputPayload {
-    pub repositories: Vec<Repository>,
-}
-
-impl OutputPayload {
-    pub fn new(repositories: Vec<Repository>) -> Self {
-        Self { repositories }
-    }
-}
