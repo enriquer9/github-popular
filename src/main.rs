@@ -4,7 +4,7 @@ use github_popular::file_exporter::{export_json, export_toml, ExportPayload};
 use github_popular::github::GitHubResult;
 use github_popular::github::GitHubResult::{Failure, Success};
 use github_popular::models::stars_descending_then_name;
-use github_popular::{AppError, Cli, GitHubClient, Repository, TerminalFormatter};
+use github_popular::{AppError, Cli, GitHubClient, Repository, TerminalWriter};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -82,7 +82,7 @@ async fn handle_stream(
     has_file_export: bool,
     mut stream: impl Stream<Item = Result<GitHubResult, AppError>> + Unpin,
 ) -> (bool, Vec<Repository>) {
-    let formatter = TerminalFormatter::new();
+    let terminal = TerminalWriter::new();
     let mut all_repositories: Vec<Repository> = Vec::new();
     let mut has_errors = false;
 
@@ -91,7 +91,7 @@ async fn handle_stream(
             Ok(ghr) => match ghr {
                 Success { account, repos } => {
                     if !has_file_export {
-                        formatter.render_account_repos(&account, &repos);
+                        terminal.render_account_repos(&account, &repos);
                     }
                     all_repositories.extend(repos);
                 }

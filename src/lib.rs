@@ -3,14 +3,14 @@ pub use errors::{AppError, Result};
 pub use file_exporter::{export_json, export_toml, ExportPayload};
 pub use github::GitHubClient;
 pub use models::Repository;
-pub use output::TerminalFormatter;
+pub use term_writer::TerminalWriter;
 
 pub mod cli;
 pub mod errors;
 pub mod file_exporter;
 pub mod github;
 pub mod models;
-pub mod output;
+pub mod term_writer;
 
 #[cfg(test)]
 mod tests {

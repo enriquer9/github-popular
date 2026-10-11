@@ -3,11 +3,11 @@ use colored::Colorize;
 use std::io::{self, IsTerminal};
 
 /// Controls colorization and formatting for terminal output.
-pub struct TerminalFormatter {
+pub struct TerminalWriter {
     is_tty: bool,
 }
 
-impl TerminalFormatter {
+impl TerminalWriter {
     pub fn new() -> Self {
         // Detect if stdout is attached to a real interactive terminal and respect NO_COLOR
         let is_tty = io::stdout().is_terminal() && std::env::var("NO_COLOR").is_err();
@@ -103,7 +103,7 @@ impl TerminalFormatter {
     }
 }
 
-impl Default for TerminalFormatter {
+impl Default for TerminalWriter {
     fn default() -> Self {
         Self::new()
     }
