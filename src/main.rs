@@ -1,10 +1,10 @@
 use clap::Parser;
 use colored::Colorize;
 use github_popular::file_exporter::{export_json, export_toml, ExportPayload};
-use github_popular::github_client::GitHubResult;
 use github_popular::github_client::GitHubResult::{Failure, Success};
+use github_popular::github_client::{GitHubError, GitHubResult};
 use github_popular::github_models::stars_descending_then_name;
-use github_popular::{AppError, Cli, GitHubClient, Repository, TerminalWriter};
+use github_popular::{AppResult, Cli, GitHubClient, Repository, TerminalWriter};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -60,9 +60,9 @@ async fn main() -> ExitCode {
 fn stream_repos(
     client: GitHubClient,
     accounts: Vec<String>,
-) -> Result<impl Stream<Item = Result<GitHubResult, AppError>>, AppError> {
+) -> AppResult<impl Stream<Item = Result<GitHubResult, GitHubError>>> {
     let client = Arc::new(client);
-    let (tx, rx) = mpsc::channel::<github_popular::Result<GitHubResult>>(1);
+    let (tx, rx) = mpsc::channel::<Result<GitHubResult, GitHubError>>(1);
 
     for account in accounts {
         let client = Arc::clone(&client);
@@ -80,7 +80,7 @@ fn stream_repos(
 
 async fn handle_stream(
     has_file_export: bool,
-    mut stream: impl Stream<Item = Result<GitHubResult, AppError>> + Unpin,
+    mut stream: impl Stream<Item = Result<GitHubResult, GitHubError>> + Unpin,
 ) -> (bool, Vec<Repository>) {
     let terminal = TerminalWriter::new();
     let mut all_repositories: Vec<Repository> = Vec::new();

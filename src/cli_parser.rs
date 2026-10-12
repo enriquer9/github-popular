@@ -1,6 +1,18 @@
-use crate::errors::{AppError, Result};
+use crate::cli_parser::CliError::{DuplicateExportPath, NoAccountsProvided};
 use clap::Parser;
 use std::path::{Path, PathBuf};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum CliError {
+    #[error("Conflicting export paths: --json and --toml cannot write to the same destination path: {0}")]
+    DuplicateExportPath(PathBuf),
+
+    #[error("No accounts were provided. Specify at least one GitHub account login.")]
+    NoAccountsProvided,
+}
+
+pub type Result<T> = std::result::Result<T, CliError>;
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -29,12 +41,12 @@ impl Cli {
     /// Returns an error if --json and --toml point to the same target path.
     pub fn validate(&self) -> Result<()> {
         if self.accounts.is_empty() {
-            return Err(AppError::NoAccountsProvided);
+            return Err(NoAccountsProvided);
         }
 
         if let (Some(json_path), Some(toml_path)) = (&self.json, &self.toml) {
             if paths_are_equivalent(json_path, toml_path) {
-                return Err(AppError::DuplicateExportPath(json_path.clone()));
+                return Err(DuplicateExportPath(json_path.clone()));
             }
         }
 
@@ -83,7 +95,7 @@ mod tests {
             json: None,
             toml: None,
         };
-        assert!(matches!(cli.validate(), Err(AppError::NoAccountsProvided)));
+        assert!(matches!(cli.validate(), Err(NoAccountsProvided)));
     }
 
     #[test]
@@ -97,7 +109,7 @@ mod tests {
         let result = cli.validate();
         assert!(result.is_err(), "Duplicate paths should return an error");
         match result.unwrap_err() {
-            AppError::DuplicateExportPath(p) => {
+            DuplicateExportPath(p) => {
                 assert_eq!(p, PathBuf::from("/tmp/results.data"));
             }
             other => panic!("Unexpected error type: {:?}", other),

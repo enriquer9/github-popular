@@ -1,8 +1,10 @@
-use crate::{AppError, Repository};
+use crate::file_exporter::ExportError::FileIo;
+use crate::Repository;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use thiserror::Error;
 
 /// Container struct for serialized exports (JSON and TOML).
 /// Ensures identical fields and consistent formatting in both formats.
@@ -17,48 +19,64 @@ impl ExportPayload {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum ExportError {
+    #[error("File I/O error at '{path}': {source}")]
+    FileIo {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Failed to serialize JSON export: {0}")]
+    JsonSerialize(#[from] serde_json::Error),
+
+    #[error("Failed to serialize TOML export: {0}")]
+    TomlSerialize(#[from] toml::ser::Error),
+}
+
+pub type Result<T> = std::result::Result<T, ExportError>;
+
 /// Writes repository results to JSON format at the specified path.
-pub fn export_json(path: &Path, payload: &ExportPayload) -> crate::Result<()> {
+pub fn export_json(path: &Path, payload: &ExportPayload) -> Result<()> {
     create_parents(path)?;
 
     let json_str = serde_json::to_string_pretty(payload)?;
-    let mut file = File::create(path).map_err(|e| AppError::Io {
+    let mut file = File::create(path).map_err(|e| FileIo {
         path: path.to_path_buf(),
         source: e,
     })?;
 
-    file.write_all(json_str.as_bytes())
-        .map_err(|e| AppError::Io {
-            path: path.to_path_buf(),
-            source: e,
-        })?;
+    file.write_all(json_str.as_bytes()).map_err(|e| FileIo {
+        path: path.to_path_buf(),
+        source: e,
+    })?;
 
     Ok(())
 }
 
 /// Writes repository results to TOML format at the specified path.
-pub fn export_toml(path: &Path, payload: &ExportPayload) -> crate::Result<()> {
+pub fn export_toml(path: &Path, payload: &ExportPayload) -> Result<()> {
     create_parents(path)?;
 
     let toml_str = toml::to_string_pretty(payload)?;
-    let mut file = File::create(path).map_err(|e| AppError::Io {
+    let mut file = File::create(path).map_err(|e| FileIo {
         path: path.to_path_buf(),
         source: e,
     })?;
 
-    file.write_all(toml_str.as_bytes())
-        .map_err(|e| AppError::Io {
-            path: path.to_path_buf(),
-            source: e,
-        })?;
+    file.write_all(toml_str.as_bytes()).map_err(|e| FileIo {
+        path: path.to_path_buf(),
+        source: e,
+    })?;
 
     Ok(())
 }
 
-fn create_parents(path: &Path) -> crate::Result<()> {
+fn create_parents(path: &Path) -> Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).map_err(|e| AppError::Io {
+            std::fs::create_dir_all(parent).map_err(|e| FileIo {
                 path: parent.to_path_buf(),
                 source: e,
             })?;

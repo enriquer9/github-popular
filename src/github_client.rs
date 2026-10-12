@@ -1,10 +1,13 @@
-use crate::errors::{AppError, Result};
+use crate::github_client::GitHubError::{
+    AccountNotFound, AuthenticationFailed, GitHubApi, RateLimitExceeded,
+};
 use crate::github_models::{
     stars_descending_then_name, RawGitHubAccount, RawGitHubRepo, Repository,
 };
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 use reqwest::{Client, Response, StatusCode};
 use std::time::{Duration, UNIX_EPOCH};
+use thiserror::Error;
 
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 
@@ -19,6 +22,29 @@ pub enum GitHubResult {
         error: String,
     },
 }
+
+#[derive(Error, Debug)]
+pub enum GitHubError {
+    #[error("Network transport failure: {0}")]
+    Transport(#[from] reqwest::Error),
+
+    #[error("GitHub account '{0}' was not found (HTTP 404)")]
+    AccountNotFound(String),
+
+    #[error("Authentication failed (HTTP {status}): {message}. Please verify your GITHUB_TOKEN.")]
+    AuthenticationFailed { status: u16, message: String },
+
+    #[error("GitHub API rate limit exceeded ({limit} requests/hr). Limit resets at {reset_time}. Consider providing a GITHUB_TOKEN environment variable.")]
+    RateLimitExceeded { limit: String, reset_time: String },
+
+    #[error("GitHub API error (HTTP {status}): {message}")]
+    GitHubApi { status: u16, message: String },
+
+    #[error("Malformed JSON response from GitHub API: {0}")]
+    MalformedResponse(#[from] serde_json::Error),
+}
+
+pub type Result<T> = std::result::Result<T, GitHubError>;
 
 /// GitHub REST API v3 Client
 #[derive(Clone, Debug)]
@@ -76,7 +102,7 @@ impl GitHubClient {
     pub async fn fetch_popular_repos(&self, account: &str) -> Result<GitHubResult> {
         let trimmed_account = account.trim();
         if trimmed_account.is_empty() {
-            return Err(AppError::AccountNotFound(account.to_string()));
+            return Err(AccountNotFound(account.to_string()));
         }
 
         // 1. Verify account exists and determine if it's a User or Organization
@@ -188,11 +214,11 @@ impl GitHubClient {
         let message = extract_github_message(&body_text).unwrap_or(body_text);
 
         if status == StatusCode::NOT_FOUND {
-            return Err(AppError::AccountNotFound(account.to_string()));
+            return Err(AccountNotFound(account.to_string()));
         }
 
         if status == StatusCode::UNAUTHORIZED {
-            return Err(AppError::AuthenticationFailed {
+            return Err(AuthenticationFailed {
                 status: status.as_u16(),
                 message,
             });
@@ -207,20 +233,20 @@ impl GitHubClient {
                 "shortly".to_string()
             };
 
-            return Err(AppError::RateLimitExceeded {
+            return Err(RateLimitExceeded {
                 limit: rate_limit.to_string(),
                 reset_time: reset_time_str,
             });
         }
 
         if status == StatusCode::FORBIDDEN {
-            return Err(AppError::AuthenticationFailed {
+            return Err(AuthenticationFailed {
                 status: status.as_u16(),
                 message,
             });
         }
 
-        Err(AppError::GitHubApi {
+        Err(GitHubApi {
             status: status.as_u16(),
             message,
         })
